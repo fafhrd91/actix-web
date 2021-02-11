@@ -1,6 +1,9 @@
 # Changes
 
 ## Unreleased - 2021-xx-xx
+* Add `ws:WsResponseBuilder` for building web socket session response. [#1920]
+
+[#1920]: https://github.com/actix/actix-web/pull/1920
 
 
 ## 4.0.0-beta.2 - 2021-02-10
