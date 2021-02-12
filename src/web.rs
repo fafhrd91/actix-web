@@ -2,7 +2,7 @@
 
 use actix_http::http::Method;
 use actix_router::IntoPattern;
-use std::future::Future;
+use std::{borrow::Cow, future::Future};
 
 pub use actix_http::Response as HttpResponse;
 pub use bytes::{Buf, BufMut, Bytes, BytesMut};
@@ -10,6 +10,7 @@ pub use bytes::{Buf, BufMut, Bytes, BytesMut};
 use crate::error::BlockingError;
 use crate::extract::FromRequest;
 use crate::handler::Handler;
+use crate::redirect::Redirect;
 use crate::resource::Resource;
 use crate::responder::Responder;
 use crate::route::Route;
@@ -228,6 +229,24 @@ pub fn trace() -> Route {
 ///
 pub fn method(method: Method) -> Route {
     Route::new().method(method)
+}
+
+/// Create a relative or absolute redirect.
+///
+/// See [`Redirect`] docs for usage details.
+///
+/// ```rust
+/// use actix_web::{web, App};
+///
+/// let app = App::new().service(
+///     web::redirect("/one", "/two")
+/// );
+/// ```
+pub fn redirect(
+    from: impl Into<Cow<'static, str>>,
+    to: impl Into<Cow<'static, str>>,
+) -> Redirect {
+    Redirect::new(from, to)
 }
 
 /// Create a new route and add handler.

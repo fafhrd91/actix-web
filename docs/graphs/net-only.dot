@@ -6,7 +6,6 @@ digraph {
         "actix-rt"
         "actix-server"
         "actix-service"
-        "actix-threadpool"
         "actix-tls"
         "actix-tracing"
         "actix-utils"
@@ -17,5 +16,5 @@ digraph {
     "actix-tracing" -> { "actix-service" }
     "actix-tls" -> { "actix-service" "actix-codec" "actix-utils" "actix-rt" }
     "actix-server" -> { "actix-service" "actix-rt" "actix-codec" "actix-utils" }
-    "actix-rt" -> { "actix-macros" "actix-threadpool" }
+    "actix-rt" -> { "actix-macros" }
 }

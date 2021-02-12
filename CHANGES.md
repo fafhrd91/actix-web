@@ -1,6 +1,10 @@
 # Changes
 
 ## Unreleased - 2021-xx-xx
+### Added
+* Add rudimentary redirection service (`Redirect`/`web::redirect`). [#1961]
+
+[#1961]: https://github.com/actix/actix-web/pull/1961
 
 
 ## 4.0.0-beta.3 - 2021-02-10

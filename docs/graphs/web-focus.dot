@@ -12,11 +12,11 @@ digraph {
         "actix-http-test"
     }
 
-    "actix-web" -> { "actix-codec" "actix-service" "actix-utils" "actix-router" "actix-rt" "actix-server" "macros" "threadpool" "actix-tls" "actix-web-codegen" "actix-http" "awc" }
+    "actix-web" -> { "actix-codec" "actix-service" "actix-utils" "actix-router" "actix-rt" "actix-server" "actix-macros" "actix-tls" "actix-web-codegen" "actix-http" "awc" }
     "awc" -> { "actix-codec" "actix-service" "actix-http" "actix-rt" }
     "actix-web-actors" -> { "actix" "actix-web" "actix-http" "actix-codec" }
     "actix-multipart" -> { "actix-web" "actix-service" "actix-utils" }
-    "actix-http" -> { "actix-service" "actix-codec" "actix-tls" "actix-utils" "actix-rt" "threadpool" }
+    "actix-http" -> { "actix-service" "actix-codec" "actix-tls" "actix-utils" "actix-rt" }
     "actix-http" -> { "actix-tls" }[color=blue] // optional
     "actix-files" -> { "actix-web" }
     "actix-http-test" -> { "actix-service" "actix-codec" "actix-tls" "actix-utils" "actix-rt" "actix-server" "awc" }
@@ -27,7 +27,7 @@ digraph {
     "actix-tracing" -> { "actix-service" }
     "actix-tls" -> { "actix-service" "actix-codec" "actix-utils" }
     "actix-server" -> { "actix-service" "actix-rt" "actix-codec" "actix-utils" }
-    "actix-rt" -> { "macros" "threadpool" }
+    "actix-rt" -> { "actix-macros" }
 
     // actix
 
