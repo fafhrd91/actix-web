@@ -199,6 +199,17 @@ impl ServiceConfig {
         self
     }
 
+    /// Run external configuration as part of the application building process
+    ///
+    /// Counterpart to [`App::configure()`](crate::App::configure) that allows for easy nesting.
+    pub fn configure<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnOnce(&mut ServiceConfig),
+    {
+        f(self);
+        self
+    }
+
     /// Configure route for a specific path.
     ///
     /// Counterpart to [`App::route()`](crate::App::route).

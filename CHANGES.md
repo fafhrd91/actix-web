@@ -1,11 +1,13 @@
 # Changes
 
 ## Unreleased - 2021-xx-xx
+### Added
+* Added `ServiceConfig::configure` to allow easy nesting of configuration. [#1988]
 ### Changed
 * Feature `cookies` is now optional and enabled by default. [#1981]
 
 [#1981]: https://github.com/actix/actix-web/pull/1981
-
+[#1988]: https://github.com/actix/actix-web/pull/1988
 
 ## 4.0.0-beta.3 - 2021-02-10
 * Update `actix-web-codegen` to `0.5.0-beta.1`.
