@@ -1,7 +1,7 @@
 # Changes
 
 ## Unreleased - 2021-xx-xx
-
+* Ensure the content-disposition header is included in every part of a multipart message [#2090]
 
 ## 0.4.0-beta.3 - 2021-03-09
 * No notable changes.

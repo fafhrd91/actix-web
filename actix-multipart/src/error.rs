@@ -10,6 +10,9 @@ pub enum MultipartError {
     /// Content-Type header is not found
     #[display(fmt = "No Content-type header found")]
     NoContentType,
+    /// Content-Disposition header satisfying RFC7578 is not found (see https://tools.ietf.org/html/rfc7578#section-4.2)
+    #[display(fmt = "No content-disposition header satisfying RFC7578 found")]
+    NoContentDisposition,
     /// Can not parse Content-Type header
     #[display(fmt = "Can not parse Content-Type header")]
     ParseContentType,
