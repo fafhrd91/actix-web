@@ -1,6 +1,6 @@
 //! Various helpers for Actix applications to use during testing.
 
-use std::{net::SocketAddr, rc::Rc};
+use std::{borrow::Cow, net::SocketAddr, rc::Rc};
 
 pub use actix_http::test::TestBuffer;
 use actix_http::{
@@ -471,7 +471,11 @@ impl TestRequest {
     }
 
     /// Set request path pattern parameter
-    pub fn param(mut self, name: &'static str, value: &'static str) -> Self {
+    pub fn param(
+        mut self,
+        name: impl Into<Cow<'static, str>>,
+        value: impl Into<Cow<'static, str>>,
+    ) -> Self {
         self.path.add_static(name, value);
         self
     }
