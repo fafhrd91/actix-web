@@ -24,13 +24,14 @@
 //!     );
 //! }
 //! ```
-#![allow(non_snake_case)]
-use std::convert::TryFrom;
-use std::ops::Deref;
-use std::rc::Rc;
 
-use actix_http::http::{self, header, uri::Uri};
-use actix_http::RequestHead;
+#![allow(non_snake_case)]
+
+use std::{convert::TryFrom, ops::Deref, rc::Rc};
+
+use actix_http::{header, http, uri::Uri, RequestHead};
+
+use crate::http::header::{from_comma_delimited, Accept};
 
 /// Trait defines resource guards. Guards are used for route selection.
 ///
@@ -503,5 +504,93 @@ mod tests {
 
         assert!(Any(Get()).or(Trace()).check(r.head()));
         assert!(!Any(Get()).or(Get()).check(r.head()));
+    }
+}
+
+/// A guard that verifies that an `Accept` header is present and it contains a compatible
+/// mime type.
+///
+/// TODO...
+#[derive(Debug, Clone)]
+pub struct Acceptable {
+    mime: mime::Mime,
+
+    /// Wether to match `*/*` mime type.
+    ///
+    /// Defaults to false because it's not very useful otherwise.
+    match_star_star: bool,
+}
+
+impl Acceptable {
+    pub fn new(mime: mime::Mime) -> Self {
+        Self {
+            mime,
+            match_star_star: false,
+        }
+    }
+
+    pub fn match_star_star(mut self) -> Self {
+        self.match_star_star = true;
+        self
+    }
+}
+
+impl Guard for Acceptable {
+    fn check(&self, req: &RequestHead) -> bool {
+        let headers = req.headers().get_all(header::ACCEPT);
+
+        let accept = match from_comma_delimited(headers).map(Accept) {
+            Ok(hdr) => hdr,
+            Err(_) => return false,
+        };
+
+        let target_type = self.mime.type_();
+        let target_subtype = self.mime.subtype();
+
+        for mime in accept.0.into_iter().map(|q| q.item) {
+            return match (mime.type_(), mime.subtype()) {
+                (typ, subtype) if typ == target_type && subtype == target_subtype => true,
+                (typ, mime::STAR) if typ == target_type => true,
+                (mime::STAR, mime::STAR) if self.match_star_star => true,
+                _ => continue,
+            };
+        }
+
+        false
+    }
+}
+
+#[cfg(test)]
+mod acceptable_tests {
+    use actix_http::http::header;
+
+    use super::*;
+    use crate::test::TestRequest;
+
+    #[test]
+    fn test_acceptable() {
+        let r = TestRequest::default().to_http_request();
+        assert!(!Acceptable::new(mime::APPLICATION_JSON).check(r.head()));
+
+        let r = TestRequest::default()
+            .insert_header((header::ACCEPT, "application/json"))
+            .to_http_request();
+        assert!(Acceptable::new(mime::APPLICATION_JSON).check(r.head()));
+
+        let r = TestRequest::default()
+            .insert_header((header::ACCEPT, "text/html, application/json"))
+            .to_http_request();
+        assert!(Acceptable::new(mime::APPLICATION_JSON).check(r.head()));
+    }
+
+    #[test]
+    fn test_acceptable_star() {
+        let r = TestRequest::default()
+            .insert_header((header::ACCEPT, "text/html, */*;q=0.8"))
+            .to_http_request();
+
+        assert!(Acceptable::new(mime::APPLICATION_JSON)
+            .match_star_star()
+            .check(r.head()));
     }
 }
