@@ -1,6 +1,8 @@
 mod redirect;
+mod retry;
 
 pub use self::redirect::Redirect;
+pub use self::retry::Retry;
 
 use std::marker::PhantomData;
 
