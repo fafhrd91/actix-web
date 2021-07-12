@@ -101,6 +101,7 @@ smallvec = "1.6"
 socket2 = "0.4.0"
 time = { version = "0.2.23", default-features = false, features = ["std"] }
 url = "2.1"
+tokio = { version = "1.7.1", features = ["sync"] }
 
 [dev-dependencies]
 actix-test = { version = "0.1.0-beta.3", features = ["openssl", "rustls"] }

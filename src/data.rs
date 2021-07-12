@@ -1,9 +1,11 @@
-use std::{any::type_name, ops::Deref, sync::Arc};
+use std::{any::type_name, cell::Cell, fmt, future::Future, ops::Deref, rc::Rc, sync::Arc};
 
 use actix_http::Extensions;
 use actix_utils::future::{err, ok, Ready};
 use futures_core::future::LocalBoxFuture;
+use futures_util::FutureExt;
 use serde::Serialize;
+use tokio::sync::OnceCell;
 
 use crate::{
     dev::Payload, error::ErrorInternalServerError, extract::FromRequest, request::HttpRequest,
@@ -146,6 +148,83 @@ impl<T: ?Sized + 'static> DataFactory for Data<T> {
     fn create(&self, extensions: &mut Extensions) -> bool {
         extensions.insert(Data(self.0.clone()));
         true
+    }
+}
+
+/// A lazy extractor for thread-local data.
+pub struct LazyData<T> {
+    inner: Rc<LazyDataInner<T>>,
+}
+
+pub struct LazyDataInner<T> {
+    cell: OnceCell<T>,
+    fut: Cell<Option<LocalBoxFuture<'static, T>>>,
+}
+
+impl<T> Clone for LazyData<T> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
+}
+
+impl<T: fmt::Debug> fmt::Debug for LazyData<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Lazy")
+            .field("cell", &self.inner.cell)
+            .field("fut", &"..")
+            .finish()
+    }
+}
+
+impl<T> LazyData<T> {
+    pub fn new<F, Fut>(init: F) -> LazyData<T>
+    where
+        F: FnOnce() -> Fut,
+        Fut: Future<Output = T> + 'static,
+    {
+        Self {
+            inner: Rc::new(LazyDataInner {
+                cell: OnceCell::new(),
+                fut: Cell::new(Some(init().boxed_local())),
+            }),
+        }
+    }
+
+    pub async fn get(&self) -> &T {
+        self.inner
+            .cell
+            .get_or_init(|| async move {
+                match self.inner.fut.take() {
+                    Some(fut) => fut.await,
+                    None => panic!("LazyData instance has previously been poisoned"),
+                }
+            })
+            .await
+    }
+}
+
+impl<T: 'static> FromRequest for LazyData<T> {
+    type Config = ();
+    type Error = Error;
+    type Future = Ready<Result<Self, Error>>;
+
+    #[inline]
+    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
+        if let Some(lazy) = req.app_data::<LazyData<T>>() {
+            ok(lazy.clone())
+        } else {
+            log::debug!(
+                "Failed to construct App-level LazyData extractor. \
+                 Request path: {:?} (type: {})",
+                req.path(),
+                type_name::<T>(),
+            );
+            err(ErrorInternalServerError(
+                "App data is not configured, to configure use App::data()",
+            ))
+        }
     }
 }
 

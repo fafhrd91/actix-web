@@ -17,7 +17,7 @@ use crate::scope::Scope;
 use crate::service::WebService;
 
 pub use crate::config::ServiceConfig;
-pub use crate::data::Data;
+pub use crate::data::{Data, LazyData};
 pub use crate::request::HttpRequest;
 pub use crate::request_data::ReqData;
 pub use crate::types::*;
