@@ -139,7 +139,6 @@ where
 {
     type Error = Error;
     type Future = JsonExtractFut<T>;
-    type Config = JsonConfig;
 
     #[inline]
     fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {

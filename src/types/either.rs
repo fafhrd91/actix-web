@@ -187,7 +187,6 @@ where
 {
     type Error = EitherExtractError<L::Error, R::Error>;
     type Future = EitherExtractFut<L, R>;
-    type Config = ();
 
     fn from_request(req: &HttpRequest, payload: &mut dev::Payload) -> Self::Future {
         EitherExtractFut {

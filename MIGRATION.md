@@ -10,6 +10,8 @@
 
   Alternatively, explicitly require trailing slashes: `NormalizePath::new(TrailingSlash::Always)`.
 
+* The `type Config` of `FromRequest` was removed.
+
 * Feature flag `compress` has been split into its supported algorithm (brotli, gzip, zstd).
   By default all compression algorithms are enabled.
   To select algorithm you want to include with `middleware::Compress` use following flags:

@@ -1,6 +1,10 @@
 # Changes
 
 ## Unreleased - 2021-xx-xx
+### Removed
+* `FromRequest::Config` was removed. [#2233]
+
+[#2233]: https://github.com/actix/actix-web/pull/2233
 
 
 ## 4.0.0-beta.8 - 2021-06-26

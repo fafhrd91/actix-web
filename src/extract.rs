@@ -13,13 +13,42 @@ use futures_core::ready;
 
 use crate::{dev::Payload, Error, HttpRequest};
 
-/// Trait implemented by types that can be extracted from request.
+/// A type that implements [`FromRequest`] is called an **extractor** and can extract data
+/// from the request. Examples of types that implement this trait are [`Json`], [`Form`], [`Path`].
 ///
-/// Types that implement this trait can be used with `Route` handlers.
+/// An extractor can be customized by injecting the corresponding configuration with one of:
+///
+/// - [`App::app_data()`](`crate::App::app_data`)
+/// - [`Scope::app_data()`](`crate::Scope::app_data`)
+/// - [`Resource::app_data()`](`crate::Resource::app_data`)
+///
+/// Here are some built-in extractors and their corresponding configuration.
+/// Please refer to the respective documentation for details.
+///
+/// | Extractor   | Configuration     |
+/// |-------------|-------------------|
+/// | [`Json`]    | [`JsonConfig`]    |
+/// | [`Form`]    | [`FormConfig`]    |
+/// | [`Path`]    | [`PathConfig`]    |
+/// | [`Query`]   | [`QueryConfig`]   |
+/// | [`Payload`] | [`PayloadConfig`] |
+/// | [`String`]  | [`PayloadConfig`] |
+/// | [`Bytes`]   | [`PayloadConfig`] |
+///
+/// [`Json`]: crate::web::Json
+/// [`JsonConfig`]: crate::web::JsonConfig
+/// [`Form`]: crate::web::Form
+/// [`FormConfig`]: crate::web::FormConfig
+/// [`Path`]: crate::web::Path
+/// [`PathConfig`]: crate::web::PathConfig
+/// [`Query`]: crate::web::Query
+/// [`QueryConfig`]: crate::web::QueryConfig
+/// [`Payload`]: crate::web::Payload
+/// [`PayloadConfig`]: crate::web::PayloadConfig
+/// [`String`]: FromRequest#impl-FromRequest-for-String
+/// [`Bytes`]: crate::web::Bytes#impl-FromRequest
+#[cfg_attr(docsrs, doc(alias = "Extractor"))]
 pub trait FromRequest: Sized {
-    /// Configuration for this extractor.
-    type Config: Default + 'static;
-
     /// The associated error which can be returned.
     type Error: Into<Error>;
 
@@ -34,14 +63,6 @@ pub trait FromRequest: Sized {
     /// This method is short for `T::from_request(req, &mut Payload::None)`.
     fn extract(req: &HttpRequest) -> Self::Future {
         Self::from_request(req, &mut Payload::None)
-    }
-
-    /// Create and configure config instance.
-    fn configure<F>(f: F) -> Self::Config
-    where
-        F: FnOnce(Self::Config) -> Self::Config,
-    {
-        f(Self::Config::default())
     }
 }
 
@@ -65,7 +86,6 @@ pub trait FromRequest: Sized {
 /// impl FromRequest for Thing {
 ///     type Error = Error;
 ///     type Future = Ready<Result<Self, Self::Error>>;
-///     type Config = ();
 ///
 ///     fn from_request(req: &HttpRequest, payload: &mut dev::Payload) -> Self::Future {
 ///         if rand::random() {
@@ -100,7 +120,6 @@ where
 {
     type Error = Error;
     type Future = FromRequestOptFuture<T::Future>;
-    type Config = T::Config;
 
     #[inline]
     fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
@@ -156,7 +175,6 @@ where
 /// impl FromRequest for Thing {
 ///     type Error = Error;
 ///     type Future = Ready<Result<Thing, Error>>;
-///     type Config = ();
 ///
 ///     fn from_request(req: &HttpRequest, payload: &mut dev::Payload) -> Self::Future {
 ///         if rand::random() {
@@ -189,7 +207,6 @@ where
 {
     type Error = Error;
     type Future = FromRequestResFuture<T::Future>;
-    type Config = T::Config;
 
     #[inline]
     fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
@@ -233,7 +250,6 @@ where
 impl FromRequest for Uri {
     type Error = Infallible;
     type Future = Ready<Result<Self, Self::Error>>;
-    type Config = ();
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
         ok(req.uri().clone())
@@ -255,7 +271,6 @@ impl FromRequest for Uri {
 impl FromRequest for Method {
     type Error = Infallible;
     type Future = Ready<Result<Self, Self::Error>>;
-    type Config = ();
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
         ok(req.method().clone())
@@ -266,7 +281,6 @@ impl FromRequest for Method {
 impl FromRequest for () {
     type Error = Infallible;
     type Future = Ready<Result<Self, Self::Error>>;
-    type Config = ();
 
     fn from_request(_: &HttpRequest, _: &mut Payload) -> Self::Future {
         ok(())
@@ -306,7 +320,6 @@ macro_rules! tuple_from_req ({$fut_type:ident, $(($n:tt, $T:ident)),+} => {
         {
             type Error = Error;
             type Future = $fut_type<$($T),+>;
-            type Config = ($($T::Config),+);
 
             fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
                 $fut_type {

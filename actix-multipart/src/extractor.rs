@@ -33,7 +33,6 @@ use crate::server::Multipart;
 impl FromRequest for Multipart {
     type Error = Error;
     type Future = Ready<Result<Multipart, Error>>;
-    type Config = ();
 
     #[inline]
     fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {

@@ -126,20 +126,12 @@ impl<T> FromRequest for Form<T>
 where
     T: DeserializeOwned + 'static,
 {
-    type Config = FormConfig;
     type Error = Error;
     type Future = FormExtractFut<T>;
 
     #[inline]
     fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        let (limit, err_handler) = req
-            .app_data::<Self::Config>()
-            .or_else(|| {
-                req.app_data::<web::Data<Self::Config>>()
-                    .map(|d| d.as_ref())
-            })
-            .map(|c| (c.limit, c.err_handler.clone()))
-            .unwrap_or((16384, None));
+        let FormConfig { limit, err_handler } = FormConfig::from_req(req).clone();
 
         FormExtractFut {
             fut: UrlEncoded::new(req, payload).limit(limit),
@@ -241,14 +233,26 @@ impl FormConfig {
         self.err_handler = Some(Rc::new(f));
         self
     }
+
+    /// Extract payload config from app data.
+    ///
+    /// Checks both `T` and `Data<T>`, in that order, and falls back to the default payload config.
+    fn from_req(req: &HttpRequest) -> &Self {
+        req.app_data::<Self>()
+            .or_else(|| req.app_data::<web::Data<Self>>().map(|d| d.as_ref()))
+            .unwrap_or(&DEFAULT_CONFIG)
+    }
 }
+
+/// Allow shared refs used as default.
+const DEFAULT_CONFIG: FormConfig = FormConfig {
+    limit: 16_384, // 2^14 bytes (~16kB)
+    err_handler: None,
+};
 
 impl Default for FormConfig {
     fn default() -> Self {
-        FormConfig {
-            limit: 16_384, // 2^14 bytes (~16kB)
-            err_handler: None,
-        }
+        DEFAULT_CONFIG
     }
 }
 

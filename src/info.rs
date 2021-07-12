@@ -209,7 +209,6 @@ impl ConnectionInfo {
 impl FromRequest for ConnectionInfo {
     type Error = Infallible;
     type Future = Ready<Result<Self, Self::Error>>;
-    type Config = ();
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
         ok(req.connection_info().clone())
@@ -252,7 +251,6 @@ impl ResponseError for MissingPeerAddr {}
 impl FromRequest for PeerAddr {
     type Error = MissingPeerAddr;
     type Future = Ready<Result<Self, Self::Error>>;
-    type Config = ();
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
         match req.peer_addr() {

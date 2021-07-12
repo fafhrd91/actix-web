@@ -59,7 +59,6 @@ impl AsRef<Path> for PathBufWrap {
 impl FromRequest for PathBufWrap {
     type Error = UriSegmentError;
     type Future = Ready<Result<Self, Self::Error>>;
-    type Config = ();
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
         ready(req.match_info().path().parse())

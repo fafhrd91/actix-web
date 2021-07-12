@@ -62,7 +62,6 @@ where
 {
     type Error = ParseError;
     type Future = Ready<Result<Self, Self::Error>>;
-    type Config = ();
 
     #[inline]
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {

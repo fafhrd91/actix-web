@@ -120,7 +120,6 @@ where
 }
 
 impl<T: ?Sized + 'static> FromRequest for Data<T> {
-    type Config = ();
     type Error = Error;
     type Future = Ready<Result<Self, Error>>;
 

@@ -64,7 +64,6 @@ impl<T: Clone + 'static> Deref for ReqData<T> {
 }
 
 impl<T: Clone + 'static> FromRequest for ReqData<T> {
-    type Config = ();
     type Error = Error;
     type Future = Ready<Result<Self, Error>>;
 
