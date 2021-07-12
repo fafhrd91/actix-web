@@ -67,7 +67,7 @@ __compress = []
 [dependencies]
 actix-codec = "0.4.0"
 actix-macros = "0.2.1"
-actix-router = "0.2.7"
+actix-router = "0.4.0"
 actix-rt = "2.2"
 actix-server = "2.0.0-beta.3"
 actix-service = "2.0.0"
