@@ -101,6 +101,18 @@ impl Service<ServiceRequest> for FilesService {
             return Box::pin(self.handle_err(err, req));
         }
 
+        let is_path_descendant = path
+            .as_path()
+            .ancestors()
+            .any(|ancestor| ancestor == self.directory.as_path());
+        if !is_path_descendant {
+            return Either::Left(ok(req.into_response(
+                actix_web::HttpResponse::Forbidden()
+                    .insert_header(header::ContentType(mime::TEXT_PLAIN_UTF_8))
+                    .body("Requested files outside the server."),
+            )));
+        }
+
         if path.is_dir() {
             if self.redirect_to_slash
                 && !req.path().ends_with('/')

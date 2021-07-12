@@ -1,6 +1,11 @@
 # Changes
 
 ## Unreleased - 2021-xx-xx
+* Prevent directory traversal attack by checking if the request path is a descendant of the
+  `serve_from` directory. E.g. If the files are served from `./test/`, and someone requests
+  `..%5c/some-secret-file`, they will get a 403 Forbidden response. [#2059]
+
+[#2059]: https://github.com/actix/actix-web/pull/2059
 
 
 ## 0.6.0-beta.6 - 2021-06-26

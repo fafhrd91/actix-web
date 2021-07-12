@@ -86,7 +86,8 @@ impl Files {
     ///
     /// The second argument (`serve_from`) is the location on disk at which files are loaded.
     /// This can be a relative path. For example, `./` would serve files from the current
-    /// working directory.
+    /// working directory. Requests for files outside of the `serve_from` directory
+    /// will receive a Forbidden Response.
     ///
     /// # Implementation Notes
     /// If the mount path is set as the root path `/`, services registered after this one will
