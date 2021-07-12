@@ -202,6 +202,42 @@ impl NamedFile {
         self.path.as_path()
     }
 
+    /// Retrieve the time the file was modified.
+    #[inline]
+    pub fn modified(&self) -> Option<&SystemTime> {
+        self.modified.as_ref()
+    }
+
+    /// Retrieve the metadata associated with this file.
+    #[inline]
+    pub fn md(&self) -> &Metadata {
+        &self.md
+    }
+
+    /// Retrieve the value of the `ContentType` header for serving this file.
+    #[inline]
+    pub fn content_type(&self) -> &mime::Mime {
+        &self.content_type
+    }
+
+    /// Retrieve the value of the `ContentDisposition` header for serving this file.
+    #[inline]
+    pub fn content_disposition(&self) -> &header::ContentDisposition {
+        &self.content_disposition
+    }
+
+    /// Retrieve the content encoding for serving this file.
+    #[inline]
+    pub fn encoding(&self) -> Option<&ContentEncoding> {
+        self.encoding.as_ref()
+    }
+
+    /// Retrieve the status code for serving this file.
+    #[inline]
+    pub fn status_code(&self) -> &StatusCode {
+        &self.status_code
+    }
+
     /// Set response **Status Code**
     pub fn set_status_code(mut self, status: StatusCode) -> Self {
         self.status_code = status;
