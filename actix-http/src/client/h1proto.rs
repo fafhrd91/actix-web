@@ -83,12 +83,11 @@ where
         false
     };
 
-    framed.send((head, body.size()).into()).await?;
-
     let mut pin_framed = Pin::new(&mut framed);
 
     // special handle for EXPECT request.
     let (do_send, mut res_head) = if is_expect {
+        pin_framed.send((head, body.size()).into()).await?;
         let head = poll_fn(|cx| pin_framed.as_mut().poll_next(cx))
             .await
             .ok_or(ConnectError::Disconnected)??;
@@ -97,13 +96,16 @@ where
         // and current head would be used as final response head.
         (head.status == StatusCode::CONTINUE, Some(head))
     } else {
+        pin_framed.feed((head, body.size()).into()).await?;
         (true, None)
     };
 
     if do_send {
         // send request body
         match body.size() {
-            BodySize::None | BodySize::Empty | BodySize::Sized(0) => {}
+            BodySize::None | BodySize::Empty | BodySize::Sized(0) => {
+                poll_fn(|cx| pin_framed.as_mut().flush(cx)).await?;
+            }
             _ => send_body(body, pin_framed.as_mut()).await?,
         };
 
