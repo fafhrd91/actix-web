@@ -55,7 +55,7 @@ pub mod ws;
 pub use self::builder::HttpServiceBuilder;
 pub use self::config::{KeepAlive, ServiceConfig};
 pub use self::error::Error;
-pub use self::extensions::Extensions;
+pub use self::extensions::{CloneableExtensions, Extensions};
 pub use self::header::ContentEncoding;
 pub use self::http_message::HttpMessage;
 pub use self::message::ConnectionType;
@@ -98,13 +98,13 @@ pub enum Protocol {
     Http3,
 }
 
-type ConnectCallback<IO> = dyn Fn(&IO, &mut Extensions);
+type ConnectCallback<IO> = dyn Fn(&IO, &mut CloneableExtensions);
 
 /// Container for data that extract with ConnectCallback.
 ///
 /// # Implementation Details
 /// Uses Option to reduce necessary allocations when merging with request extensions.
-pub(crate) struct OnConnectData(Option<Extensions>);
+pub(crate) struct OnConnectData(Option<CloneableExtensions>);
 
 impl Default for OnConnectData {
     fn default() -> Self {
@@ -119,7 +119,7 @@ impl OnConnectData {
         on_connect_ext: Option<&ConnectCallback<T>>,
     ) -> Self {
         let ext = on_connect_ext.map(|handler| {
-            let mut extensions = Extensions::new();
+            let mut extensions = CloneableExtensions::default();
             handler(io, &mut extensions);
             extensions
         });
@@ -130,8 +130,8 @@ impl OnConnectData {
     /// Merge self into given request's extensions.
     #[inline]
     pub(crate) fn merge_into(&mut self, req: &mut Request) {
-        if let Some(ref mut ext) = self.0 {
-            req.head.extensions.get_mut().drain_from(ext);
+        if let Some(ref ext) = self.0 {
+            req.head.extensions.get_mut().clone_from(ext);
         }
     }
 }

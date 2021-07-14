@@ -6,10 +6,11 @@ use actix_service::{IntoServiceFactory, Service, ServiceFactory};
 use crate::{
     body::{AnyBody, MessageBody},
     config::{KeepAlive, ServiceConfig},
+    extensions::CloneableExtensions,
     h1::{self, ExpectHandler, H1Service, UpgradeHandler},
     h2::H2Service,
     service::HttpService,
-    ConnectCallback, Extensions, Request, Response,
+    ConnectCallback, Request, Response,
 };
 
 /// A HTTP service builder
@@ -167,7 +168,7 @@ where
     /// and handlers.
     pub fn on_connect_ext<F>(mut self, f: F) -> Self
     where
-        F: Fn(&T, &mut Extensions) + 'static,
+        F: Fn(&T, &mut CloneableExtensions) + 'static,
     {
         self.on_connect_ext = Some(Rc::new(f));
         self

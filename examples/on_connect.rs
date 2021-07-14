@@ -6,7 +6,8 @@
 
 use std::{any::Any, io, net::SocketAddr};
 
-use actix_web::{dev::Extensions, rt::net::TcpStream, web, App, HttpServer};
+use actix_http::CloneableExtensions;
+use actix_web::{rt::net::TcpStream, web, App, HttpServer};
 
 #[derive(Debug, Clone)]
 struct ConnectionInfo {
@@ -22,7 +23,7 @@ async fn route_whoami(conn_info: web::ReqData<ConnectionInfo>) -> String {
     )
 }
 
-fn get_conn_info(connection: &dyn Any, data: &mut Extensions) {
+fn get_conn_info(connection: &dyn Any, data: &mut CloneableExtensions) {
     if let Some(sock) = connection.downcast_ref::<TcpStream>() {
         data.insert(ConnectionInfo {
             bind: sock.local_addr().unwrap(),

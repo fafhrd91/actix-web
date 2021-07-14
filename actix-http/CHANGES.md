@@ -1,6 +1,13 @@
 # Changes
 
 ## Unreleased - 2021-xx-xx
+### Added
+* `CloneableExtensions` object for use in `on_connect` handlers. [#2327]
+
+### Changed
+* `on_connect_ext` methods now receive a `CloneableExtensions` object. [#2327]
+
+[#2327]: https://github.com/actix/actix-web/pull/2327
 
 
 ## 3.0.0-beta.8 - 2021-06-26

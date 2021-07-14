@@ -4,7 +4,11 @@
 ### Added
 * Re-export actix-service `ServiceFactory` in `dev` module. [#2325]
 
+### Changed
+* `HttpServer::on_connect` now receives a `CloneableExtensions` object. [#2327]
+
 [#2325]: https://github.com/actix/actix-web/pull/2325
+[#2327]: https://github.com/actix/actix-web/pull/2327
 
 
 ## 4.0.0-beta.8 - 2021-06-26
