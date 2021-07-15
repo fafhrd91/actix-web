@@ -10,6 +10,7 @@ use std::{
 use actix_http::http::{Method, Uri};
 use actix_utils::future::{ok, Ready};
 use futures_core::ready;
+use futures_util::future::{maybe_done, MaybeDone};
 
 use crate::{dev::Payload, Error, HttpRequest};
 
@@ -297,7 +298,7 @@ macro_rules! tuple_from_req ({$fut_type:ident, $(($n:tt, $T:ident)),+} => {
         /// A helper struct to allow us to pin-project through
         /// to individual fields
         #[pin_project::pin_project]
-        struct FutWrapper<$($T: FromRequest),+>($(#[pin] $T::Future),+);
+        struct FutWrapper<$($T: FromRequest),+>($(#[pin] MaybeDone<$T::Future>),+);
 
         /// FromRequest implementation for tuple
         #[doc(hidden)]
@@ -310,8 +311,7 @@ macro_rules! tuple_from_req ({$fut_type:ident, $(($n:tt, $T:ident)),+} => {
 
             fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
                 $fut_type {
-                    items: <($(Option<$T>,)+)>::default(),
-                    futs: FutWrapper($($T::from_request(req, payload),)+),
+                    futs: FutWrapper($(maybe_done($T::from_request(req, payload)),)+),
                 }
             }
         }
@@ -319,7 +319,6 @@ macro_rules! tuple_from_req ({$fut_type:ident, $(($n:tt, $T:ident)),+} => {
         #[doc(hidden)]
         #[pin_project::pin_project]
         pub struct $fut_type<$($T: FromRequest),+> {
-            items: ($(Option<$T>,)+),
             #[pin]
             futs: FutWrapper<$($T,)+>,
         }
@@ -329,28 +328,28 @@ macro_rules! tuple_from_req ({$fut_type:ident, $(($n:tt, $T:ident)),+} => {
             type Output = Result<($($T,)+), Error>;
 
             fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-                let mut this = self.project();
+                let this = self.project();
+                let mut futs = this.futs.project();
 
-                let mut ready = true;
                 $(
-                    if this.items.$n.is_none() {
-                        match this.futs.as_mut().project().$n.poll(cx) {
-                            Poll::Ready(Ok(item)) => {
-                                this.items.$n = Some(item);
+                    let mut fut = futs.$n.as_mut();
+
+                    if fut.as_mut().output_mut().is_none() {
+                        ready!(fut.as_mut().poll(cx));
+
+                        // this is a bit hacky, but we want to first check if there was an error
+                        // before taking the output.
+                        if let Some(Err(_)) = fut.as_mut().output_mut() {
+                            if let Some(Err(e)) = fut.take_output() {
+                                return Poll::Ready(Err(e.into()));
                             }
-                            Poll::Pending => ready = false,
-                            Poll::Ready(Err(e)) => return Poll::Ready(Err(e.into())),
                         }
                     }
                 )+
 
-                if ready {
-                    Poll::Ready(Ok(
-                        ($(this.items.$n.take().unwrap(),)+)
-                    ))
-                } else {
-                    Poll::Pending
-                }
+                Poll::Ready(Ok(
+                    ($(futs.$n.take_output().unwrap().unwrap_or_else(|_| unreachable!()),)+)
+                ))
             }
         }
     }
