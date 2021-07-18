@@ -1,7 +1,7 @@
 # Changes
 
 ## Unreleased - 2021-xx-xx
-
+* Add ability to create a websocket actor with a specified `Codec` while returning the `Addr<A>` 
 
 ## 4.0.0-beta.6 - 2021-06-26
 * Update `actix` to `0.12`. [#2277]

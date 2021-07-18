@@ -67,6 +67,33 @@ where
     Ok((addr, res.streaming(out_stream)))
 }
 
+/// Perform WebSocket handshake and start actor, while specifying the codec.
+///
+/// `req` is an HTTP Request that should be requesting a websocket protocol
+/// change. `stream` should be a `Bytes` stream (such as
+/// `actix_web::web::Payload`) that contains a stream of the body request. `codec`
+/// should be as WS codec.
+///
+/// If there is a problem with the handshake, an error is returned.
+///
+/// If successful, returns a pair where the first item is an address for the
+/// created actor and the second item is the response that should be returned
+/// from the WebSocket request.
+pub fn start_with_addr_and_codec<A, T>(
+    actor: A,
+    req: &HttpRequest,
+    stream: T,
+    codec: Codec,
+) -> Result<(Addr<A>, HttpResponse), Error>
+where
+    A: Actor<Context = WebsocketContext<A>> + StreamHandler<Result<Message, ProtocolError>>,
+    T: Stream<Item = Result<Bytes, PayloadError>> + 'static,
+{
+    let mut res = handshake(req)?;
+    let (addr, out_stream) = WebsocketContext::with_addr_and_codec(actor, stream, codec);
+    Ok((addr, res.streaming(out_stream)))
+}
+
 /// Do WebSocket handshake and start ws actor.
 ///
 /// `protocols` is a sequence of known protocols.
@@ -302,6 +329,29 @@ where
         ctx.add_stream(WsStream::new(stream, codec));
 
         WebsocketContextFut::new(ctx, actor, mb, codec)
+    }
+    
+    #[inline]
+    /// Create a new Websocket context from a request, an actor, and a codec, and return the address and stream
+    pub fn with_addr_and_codec<S>(
+        actor: A,
+        stream: S,
+        codec: Codec,
+    ) -> (Addr<A>, impl Stream<Item = Result<Bytes, Error>>)
+    where
+        A: StreamHandler<Result<Message, ProtocolError>>,
+        S: Stream<Item = Result<Bytes, PayloadError>> + 'static,
+    {
+        let mb = Mailbox::default();
+        let mut ctx = WebsocketContext {
+            inner: ContextParts::new(mb.sender_producer()),
+            messages: VecDeque::new(),
+        };
+        ctx.add_stream(WsStream::new(stream, codec));
+
+        let addr = ctx.address();
+
+        (addr, WebsocketContextFut::new(ctx, actor, mb, codec))
     }
 
     /// Create a new Websocket context
